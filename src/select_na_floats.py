@@ -19,12 +19,12 @@ na_index  = na_index[na_index.latitude > na_box[2]]
 na_index  = na_index[na_index.latitude < na_box[3]]
 
 # floats from after 2020 (as a starting point to minimize data load)
-na_index  = na_index[na_index.date > 2.02e13]
+# na_index  = na_index[na_index.date > 2.02e13]
 
 # argopy data fetcher
 fetcher = argopy.DataFetcher()
 ds = fetcher.float([int(w) for w in na_index.wmo.unique()]).to_xarray().to_dataframe()
 
-for wmo in ds.PLATFORM_NUMBER.unique():
-    bgc.io.get_argo(wmo, local_path=bgc.ARGO_PATH)
+# for wmo in ds.PLATFORM_NUMBER.unique():
+    # bgc.io.get_argo(wmo, local_path=bgc.ARGO_PATH)
 
