@@ -90,3 +90,4 @@ gl.xformatter = lon_formatter
 gl.yformatter = lat_formatter
 
 fig.savefig(Path('../figures/lab_sea_map_w_variables.png'), dpi=450, bbox_inches='tight')
+plt.close(fig)
