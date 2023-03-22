@@ -62,7 +62,7 @@ axes[1].set_ylabel(f'Temperature ({chr(176)}C)')
 axes[0].set_title('Surface Values ($P < 100$dbar)', loc='left')
 
 fig.set_size_inches(fig.get_figwidth()/2, fig.get_figheight())
-fig.savefig(Path('../figures/mean_surface_oxygen_temperature.png'), bbox_inches='tight', dpi=350)
+fig.savefig(Path('../../figures/2022/mean_surface_oxygen_temperature.png'), bbox_inches='tight', dpi=350)
 plt.close(fig)
 
 '''
@@ -140,7 +140,7 @@ dcax.yaxis.set_label_position('left')
 
 fig.set_size_inches(fig.get_figwidth(), fig.get_figheight()*1.5)
 fig.tight_layout()
-fig.savefig(Path('../figures/pcolor_and_maps.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/2022/pcolor_and_maps.png'), bbox_inches='tight', dpi=200)
 
 '''
 -------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ FIGURE 3 - AVERAGE OXYGEN OVER LAST 5 YEARS
 
 '''
 
-clim = df[df.YEAR != 2021]
+clim = df[df.YEAR != 2022]
 vec_pres, vec_time = np.arange(0, 2000, 1), np.arange(0, 365, 1)
 grid_pres, grid_time = np.meshgrid(vec_pres, vec_time)
 dix = (clim.DOXY_QC.isin(allowed_flags)) & (clim.DOXY.notna()) & (clim.PRES.notna()) & (clim.DAY.notna())
@@ -157,7 +157,7 @@ tix = (clim.TEMP_QC.isin(allowed_flags)) & (clim.TEMP.notna()) & (clim.PRES.notn
 clim_doxy = griddata((clim[dix].DAY.values, clim[dix].PRES.values), clim[dix].DOXY.values, (grid_time, grid_pres), method='linear')
 clim_temp = griddata((clim[tix].DAY.values, clim[tix].PRES.values), clim[tix].TEMP.values, (grid_time, grid_pres), method='linear')
 
-this_year = df[df.YEAR == 2021]
+this_year = df[df.YEAR == 2022]
 dix = (this_year.DOXY_QC.isin(allowed_flags)) & (this_year.DOXY.notna()) & (this_year.PRES.notna()) & (this_year.DAY.notna())
 tix = (this_year.TEMP_QC.isin(allowed_flags)) & (this_year.TEMP.notna()) & (this_year.PRES.notna()) & (this_year.DAY.notna())
 this_year_doxy = griddata((this_year[dix].DAY.values, this_year[dix].PRES.values), this_year[dix].DOXY.values, (grid_time, grid_pres), method='linear')
@@ -193,11 +193,11 @@ axes[1,1].set_xlabel('Julian Day')
 axes[1,2].set_xlabel('Julian Day')
 
 fig.set_size_inches(fig.get_figwidth()*2, fig.get_figheight())
-fig.savefig(Path('../figures/pcolor_clim_and_delta_upper.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/2022/pcolor_clim_and_delta_upper.png'), bbox_inches='tight', dpi=200)
 
 for ax in axes.flatten():
     ax.set_ylim((2000,0))
-fig.savefig(Path('../figures/pcolor_clim_and_delta_full.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/2022/pcolor_clim_and_delta_full.png'), bbox_inches='tight', dpi=200)
 
 '''
 -------------------------------------------------------------------------------
@@ -237,4 +237,4 @@ axes[1,0].set_ylabel('Pressure (dbar)')
 axes[1,0].set_xlabel('O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)')
 fig.set_size_inches(fig.get_figwidth()*1.25, fig.get_figheight())
 fig.tight_layout()
-fig.savefig(Path('../figures/profiles_and_average.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/2022/profiles_and_average.png'), bbox_inches='tight', dpi=200)
