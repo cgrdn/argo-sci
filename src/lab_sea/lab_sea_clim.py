@@ -57,12 +57,13 @@ sns.boxplot(x='YEAR', y='TEMP', data=surface[surface.TEMP_QC.isin(allowed_flags)
 
 axes[0].set_xlabel('')
 axes[1].set_xlabel('')
+axes[0].set_ylim(top=420)
 axes[0].set_ylabel('Diss. Oxygen ($\mathregular{\mu}$mol kg$^{-1}$)')
 axes[1].set_ylabel(f'Temperature ({chr(176)}C)')
 axes[0].set_title('Surface Values ($P < 100$dbar)', loc='left')
 
-fig.set_size_inches(fig.get_figwidth()/2, fig.get_figheight())
-fig.savefig(Path('../../figures/2022/mean_surface_oxygen_temperature.png'), bbox_inches='tight', dpi=350)
+fig.set_size_inches(fig.get_figwidth()/1.5, fig.get_figheight())
+fig.savefig(Path('../../figures/lab_sea/2022/mean_surface_oxygen_temperature.png'), bbox_inches='tight', dpi=350)
 plt.close(fig)
 
 '''
@@ -94,7 +95,7 @@ upper = df[df.PRES < 250]
 maps = {}
 for axrow, year in zip(axes, np.sort(df.YEAR.unique())):
     yr = upper[upper.YEAR == year]
-    for ax, v, cmap, vmin, vmax in zip(axrow, ['TEMP', 'DOXY'], [cmo.thermal, cmo.dense_r], [3, 300], [8, 340]):
+    for ax, v, cmap, vmin, vmax in zip(axrow, ['TEMP', 'DOXY'], [cmo.thermal, cmo.dense_r], [3, 280], [8, 340]):
         qc = yr[yr[v + '_QC'].isin(allowed_flags)]
         maps[f'{v}-{year}'] = ax.scatter(x=qc.DAY, y=qc.PRES, c=qc[v], s=3, cmap=cmap, vmin=vmin, vmax=vmax)
     
@@ -138,9 +139,9 @@ dcax.yaxis.set_ticks_position('left')
 tcax.yaxis.set_label_position('left')
 dcax.yaxis.set_label_position('left')
 
-fig.set_size_inches(fig.get_figwidth(), fig.get_figheight()*1.5)
+fig.set_size_inches(fig.get_figwidth(), fig.get_figheight()*1.75)
 fig.tight_layout()
-fig.savefig(Path('../../figures/2022/pcolor_and_maps.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/lab_sea/2022/pcolor_and_maps.png'), bbox_inches='tight', dpi=200)
 
 '''
 -------------------------------------------------------------------------------
@@ -193,11 +194,11 @@ axes[1,1].set_xlabel('Julian Day')
 axes[1,2].set_xlabel('Julian Day')
 
 fig.set_size_inches(fig.get_figwidth()*2, fig.get_figheight())
-fig.savefig(Path('../../figures/2022/pcolor_clim_and_delta_upper.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/lab_sea/2022/pcolor_clim_and_delta_upper.png'), bbox_inches='tight', dpi=200)
 
 for ax in axes.flatten():
     ax.set_ylim((2000,0))
-fig.savefig(Path('../../figures/2022/pcolor_clim_and_delta_full.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/lab_sea/2022/pcolor_clim_and_delta_full.png'), bbox_inches='tight', dpi=200)
 
 '''
 -------------------------------------------------------------------------------
@@ -235,6 +236,6 @@ axes[0,0].set_ylabel('Pressure (dbar)')
 axes[0,0].set_xlabel(f'T ({chr(176)}C)')
 axes[1,0].set_ylabel('Pressure (dbar)')
 axes[1,0].set_xlabel('O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)')
-fig.set_size_inches(fig.get_figwidth()*1.25, fig.get_figheight())
+fig.set_size_inches(fig.get_figwidth()*1.5, fig.get_figheight())
 fig.tight_layout()
-fig.savefig(Path('../../figures/2022/profiles_and_average.png'), bbox_inches='tight', dpi=200)
+fig.savefig(Path('../../figures/lab_sea/2022/profiles_and_average.png'), bbox_inches='tight', dpi=200)

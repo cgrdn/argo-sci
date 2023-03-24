@@ -19,13 +19,13 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 # select lab sea region, doxy floats, last 5 years, ascending
 # note - just do 2021 to start
 lab_sea = [-67, -43, 55, 62.5]
-bx = argo.synthetic_prof.subset_parameter('DOXY')\
-    .subset_rect(lab_sea[2], lab_sea[0], lab_sea[3], lab_sea[1])\
-    .subset_date('2016-01', '2022-01')\
+# bx = argo.synthetic_prof.subset_parameter('DOXY')\
+    # .subset_rect(lab_sea[2], lab_sea[0], lab_sea[3], lab_sea[1])\
+    # .subset_date('2016-01', '2023-01')\
+    # .subset_direction('asc')
+bx = argo.prof.subset_rect(lab_sea[2], lab_sea[0], lab_sea[3], lab_sea[1])\
+    .subset_date('2016-01', '2023-01')\
     .subset_direction('asc')
-# bx = argo.prof.subset_rect(lab_sea[2], lab_sea[0], lab_sea[3], lab_sea[1])\
-#     .subset_date('2016-01', '2022-01')\
-#     .subset_direction('asc')
 
 # this float is bad
 bx = bx[~bx.file.str.contains('4901779')]
@@ -35,14 +35,15 @@ df = bx.levels[[
     'PRES', 'PRES_QC', 
     'TEMP', 'TEMP_QC', 
     'PSAL', 'PSAL_QC', 
-    'DOXY', 'DOXY_QC'
+    # 'DOXY', 'DOXY_QC'
 ]]
 
 # average surface value for each profile
-# bx['surf_doxy'] = [df.loc[f].TEMP[df.loc[f].PRES <= 10].mean() for f in bx.file]
-bx['surf_doxy'] = [df.loc[f].DOXY[df.loc[f].PRES <= 10].mean() for f in bx.file]
-# bx['juld'] = bx.prof[['JULD']].values
-# bx['pandas_date'] = [pd.Timestamp(j -  365.25*20, unit='D') for j in bx.juld]
+bx['surf_doxy'] = [df.loc[f].TEMP[df.loc[f].PRES <= 10].mean() for f in bx.file]
+# bx['surf_doxy'] = [df.loc[f].DOXY[df.loc[f].PRES <= 10].mean() for f in bx.file]
+prof = bx.prof[['JULD']]
+bx['juld'] = [prof.JULD.loc[f,0] for f in prof.index.unique('file')]
+bx['pandas_date'] = [pd.Timestamp(j -  365.25*20, unit='D') for j in bx.juld]
 bx['year'] = [t.year for t in bx.date]
 allowed_flags = [b'1', b'2', b'3', b'5']
 
@@ -85,8 +86,8 @@ for year in years:
     ct = np.histogram2d(year_bx.longitude, year_bx.latitude, bins=[xgrid, ygrid])
     ct[0][ct[0] == 0] = np.nan
     HG[year - years[0], :, :] = ct[0].T
-    # for ax, data, cm, vmin, vmax, lab in zip(axes, [O2[year - years[0],:,:], ct[0].T], [cmo.thermal, cmo.amp], [-1, 0], [8, 60], [f'T ({chr(176)}C)', '$N_{obs}$']):
-    for ax, data, cm, vmin, vmax, lab in zip(axes, [O2[year - years[0],:,:], ct[0].T], [cmo.dense, cmo.amp], [250, 0], [350, 60], ['', '$N_{obs}$']):
+    for ax, data, cm, vmin, vmax, lab in zip(axes, [O2[year - years[0],:,:], ct[0].T], [cmo.thermal, cmo.amp], [-1, 0], [7, 60], [f'T ({chr(176)}C)', '$N_{obs}$']):
+    # for ax, data, cm, vmin, vmax, lab in zip(axes, [O2[year - years[0],:,:], ct[0].T], [cmo.thermal, cmo.amp], [250, 0], [350, 60], ['', '$N_{obs}$']):
         # plot map
         ax.set_extent(extent)
         ax.add_feature(cfeature.GSHHSFeature('low', 
@@ -104,14 +105,14 @@ for year in years:
         m = ax.pcolormesh(X, Y, data, cmap=cm, transform=transform, vmin=vmin, vmax=vmax)
         cb = plt.colorbar(m, ax=ax)
         cb.set_label(lab)
-    fig.savefig(Path(f'../../figures/2022/gridded_surface_{boxsize}deg_{year}.png'), dpi=350, bbox_inches='tight')
+    fig.savefig(Path(f'../../figures/lab_sea/2022/gridded_surface_{boxsize}deg_{year}.png'), dpi=350, bbox_inches='tight')
 
 '''
 -------------------------------------------------------------------------------
 CLIMTOLOGY FIGURE
 -------------------------------------------------------------------------------
 '''
-clim = bx.subset_date('2016-01', '2021-01')
+clim = bx.subset_date('2016-01', '2022-01')
 clim_O2 = np.nan*np.ones((N-1, M-1))
 for i in range(N-1):
     for j in range(M-1):
@@ -128,7 +129,8 @@ axes = [
     fig.add_subplot(313, projection=projection)
 ]
 
-for ax, data, cm, vmin, vmax, lab, title in zip(axes, [clim_O2, O2[-1,:,:], O2[-1,:,:]-clim_O2], [cmo.dense, cmo.dense, plt.cm.bwr], [250, 250, -60], [350, 350, 60], ['O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)', 'O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)', '$\Delta$O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)'], ['2016-2020', '2021', 'Difference: (2021) - (2016-2020)']):
+for ax, data, cm, vmin, vmax, lab, title in zip(axes, [clim_O2, O2[-1,:,:], O2[-1,:,:]-clim_O2], [cmo.thermal, cmo.thermal, plt.cm.bwr], [-1, -1, -2.5], [7, 7, 2.5], [f'T ({chr(176)}C)', f'T ({chr(176)}C)', '$\Delta$T ({}C)'.format(chr(176))], ['2016-2021', '2022', 'Difference: (2022) - (2016-2021)']):
+# for ax, data, cm, vmin, vmax, lab, title in zip(axes, [clim_O2, O2[-1,:,:], O2[-1,:,:]-clim_O2], [cmo.dense, cmo.dense, plt.cm.bwr], [250, 250, -60], [350, 350, 60], ['O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)', 'O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)', '$\Delta$O$_2$ ($\mathregular{\mu}$mol kg$^{-1}$)'], ['2016-2021', '2022', 'Difference: (2022) - (2016-2021)']):
     # plot map
     ax.set_extent(extent)
     ax.add_feature(cfeature.GSHHSFeature('low', 
@@ -148,7 +150,7 @@ for ax, data, cm, vmin, vmax, lab, title in zip(axes, [clim_O2, O2[-1,:,:], O2[-
     cb = plt.colorbar(m, ax=ax)
     cb.set_label(lab)
 fig.set_size_inches(1.5*fig.get_figwidth(), 1.5*fig.get_figheight())
-fig.savefig(Path(f'../../figures/2022/gridded_surface_{boxsize}deg_delta_60bwr.png'), dpi=350, bbox_inches='tight')
+fig.savefig(Path(f'../../figures/lab_sea/2022/gridded_surface_{boxsize}deg_delta_60bwr.png'), dpi=350, bbox_inches='tight')
 
 '''
 -------------------------------------------------------------------------------
