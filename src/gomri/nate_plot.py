@@ -12,14 +12,14 @@ import cmocean.cm as cmo
 
 import gsw
 
-data_files = Path('../../data/gomri/').glob('*.nc')
+data_files = list(Path('../../data/gomri/').glob('*.nc'))
 # time for Hurricane Nate + a 1 day on each end
 storm_range = [
     pd.Timestamp(year=2017, month=10, day=3), 
     pd.Timestamp(year=2017, month=10, day=9)
 ]
 
-for fn in data_files:
+for fn in [data_files[-3]]:
     nc = Dataset(fn)
     # build dataframe
     df = pd.DataFrame(dict(
@@ -63,7 +63,7 @@ for fn in data_files:
     date_ts = [pd.Timestamp(t, unit='D') - pd.Timedelta(days=365.25*20) for t in dates]
     date_labels = [t.strftime('%d %b, %Y %H:%M') for t in date_ts]
 
-    N = 10
+    N = 8
     rect = [0.9125, 0.1075, 0.0325, 0.775]
     cax = fig.add_axes(rect)
     cax2 = fig.add_axes(rect)
