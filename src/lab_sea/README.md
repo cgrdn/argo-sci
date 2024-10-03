@@ -6,8 +6,8 @@ Labrador Sea using Argo float data.
 
 For 2024 this will tentatively include the following:
 
-- T/S/rho maps, 2.5 deg grid and anomoly
-- Depth thresholds: surface (<50 dbar), 50-200 dbar, 1000-1800 dbar
+- T/S/rho maps and time series
+- Depth thresholds: surface (<50 dbar), 100-500 dbar, 500-1000 dbar, 1000-2000 dbar
 - Seasonal cycles / timeseries
 - MLD, stratification index
 
