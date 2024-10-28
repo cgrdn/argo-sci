@@ -4,61 +4,44 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import argopandas as argo
+import argopy
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import seaborn as sns
 sns.set_theme(style='ticks', palette='colorblind')
-import cmocean.cm as cmo
 
+import shapely
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
-# select lab sea region, doxy floats, last 5 years, ascending
-# note - just do 2021 to start
-lab_sea = [-67, -43, 55, 62.5]
-# bx = argo.synthetic_prof.subset_parameter('DOXY')\
-#     .subset_rect(lab_sea[2], lab_sea[0], lab_sea[3], lab_sea[1])\
-#     .subset_date('2016-01', '2024-01')\
-#     .subset_direction('asc')
-bx = argo.prof.subset_rect(lab_sea[2], lab_sea[0], lab_sea[3], lab_sea[1])\
-    .subset_date('2016-01', '2024-01')\
-    .subset_direction('asc')
 
-# this float is bad
-bx = bx[~bx.file.str.contains('4901779')]
-bx = bx[~bx.file.str.contains('4902581')]
+# load polygon to select data withing
+poly = pd.read_csv('polygon_3300m.csv')
+# shapely polygon
+polygon = shapely.geometry.Polygon(poly)
+# subset region to make polygon searching faster
+polygon_box = [poly.longitude.min(), poly.longitude.max(), poly.latitude.min(), poly.latitude.max()]
+# load argo index
+index = argopy.IndexFetcher().region(polygon_box).load()
+ix = index.to_dataframe()
+# points within polygon
+ix = ix.loc[[polygon.contains(shapely.geometry.Point(x,y)) for x,y in zip(ix.longitude, ix.latitude)]]
+ix['year'] = [d.year for d in ix.date]
 
-# load in the data - this will take a minute
-df = bx.levels[[
-    'PRES', 'PRES_QC', 
-    'TEMP', 'TEMP_QC', 
-    'PSAL', 'PSAL_QC', 
-    # 'DOXY', 'DOXY_QC'
-]]
 
-# prof = bx.prof[['PLATFORM_NUMBER']]
-# df = df.join(prof, on=['file', 'N_PROF'])
-# df['PLATFORM_NUMBER'] = df.PLATFORM_NUMBER.astype(int)
-# gdf = pd.read_csv('lab_sea_gains.csv')
-# df['gain'] = [gdf.loc[gdf.wmo == p].gain.values[0] for p in df.PLATFORM_NUMBER]
-# df['DOXY_ADJUSTED'] = df.DOXY*df.gain
+# get corresponding data to index above
+data = argopy.DataFetcher().region(polygon_box).load()
+df = data.to_dataframe()
 
 # average surface value for each profile
-bx['surf_doxy'] = [df.loc[f].TEMP[df.loc[f].PRES <= 200].mean() for f in bx.file]
-# bx['surf_doxy'] = [df.loc[f].DOXY_ADJUSTED[df.loc[f].PRES <= 200].mean() for f in bx.file]
-prof = bx.prof[['JULD']]
-bx['juld'] = [prof.JULD.loc[f,0] for f in prof.index.unique('file')]
-bx['pandas_date'] = [pd.Timestamp(j -  365.25*20, unit='D') for j in bx.juld]
-bx['year'] = [t.year for t in bx.date]
-allowed_flags = [b'1', b'2', b'3', b'5']
+
 
 # define grid edges
 boxsize = 2
-xgrid = np.arange(lab_sea[0], lab_sea[1]+boxsize, boxsize)
-ygrid = np.arange(lab_sea[2], lab_sea[3]+boxsize, boxsize)
+xgrid = np.arange(polygon_box[0], polygon_box[1]+boxsize, boxsize)
+ygrid = np.arange(polygon_box[2], polygon_box[3]+boxsize, boxsize)
 X, Y = np.meshgrid(xgrid, ygrid)
 N, M = X.shape
 
@@ -74,7 +57,7 @@ extent  = [-67, -42, 54.5, 63]
 INDIVIDUAL YEAR FIGURES
 -------------------------------------------------------------------------------
 '''
-years = np.sort(bx.year.unique())
+years = np.sort(ix.year.unique())
 nyear = years.shape[0]
 maps = []
 O2 = np.nan*np.ones((nyear, N-1, M-1))
@@ -82,16 +65,16 @@ HG = np.nan*np.ones((nyear, N-1, M-1))
 for year in years:
     fig = plt.figure()
     axes = [fig.add_subplot(211, projection=projection), fig.add_subplot(212, projection=projection)]
-    year_bx = bx.subset_date(f'{year}-01', f'{year+1}-01')
+    year_ix = ix.subset_date(f'{year}-01', f'{year+1}-01')
     axes[0].set_title(f'{year}', loc='left', fontweight='bold')
     for i in range(N-1):
         for j in range(M-1):
             y1, y2 = ygrid[i], ygrid[i+1]
             x1, x2 = xgrid[j], xgrid[j+1]
-            area = (year_bx.longitude > x1) & (year_bx.longitude < x2) &\
-                (year_bx.latitude > y1) & (year_bx.latitude < y2)
-            O2[year - years[0],i,j] = year_bx[area].surf_doxy.mean()
-    ct = np.histogram2d(year_bx.longitude, year_bx.latitude, bins=[xgrid, ygrid])
+            area = (year_ix.longitude > x1) & (year_ix.longitude < x2) &\
+                (year_ix.latitude > y1) & (year_ix.latitude < y2)
+            O2[year - years[0],i,j] = year_ix[area].surf_doxy.mean()
+    ct = np.histogram2d(year_ix.longitude, year_ix.latitude, bins=[xgrid, ygrid])
     ct[0][ct[0] == 0] = np.nan
     HG[year - years[0], :, :] = ct[0].T
     for ax, data, cm, vmin, vmax, lab in zip(axes, [O2[year - years[0],:,:], ct[0].T], [cmo.thermal, cmo.amp], [-1, 0], [6, 60], [f'T ({chr(176)}C)', '$N_{obs}$']):
@@ -120,7 +103,7 @@ for year in years:
 CLIMTOLOGY FIGURE
 -------------------------------------------------------------------------------
 '''
-clim = bx.subset_date('2016-01', '2023-01')
+clim = ix.subset_date('2016-01', '2023-01')
 clim_O2 = np.nan*np.ones((N-1, M-1))
 for i in range(N-1):
     for j in range(M-1):
